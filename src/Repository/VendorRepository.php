@@ -19,65 +19,74 @@ use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
  */
 class VendorRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Vendor::class);
+  public function __construct(ManagerRegistry $registry)
+  {
+    parent::__construct($registry, Vendor::class);
+  }
+
+  public function save(Vendor $entity, bool $flush = false): void
+  {
+    $this->getEntityManager()->persist($entity);
+
+    if ($flush) {
+      $this->getEntityManager()->flush();
+    }
+  }
+
+  public function remove(Vendor $entity, bool $flush = false): void
+  {
+    $this->getEntityManager()->remove($entity);
+
+    if ($flush) {
+      $this->getEntityManager()->flush();
+    }
+  }
+
+  /**
+   * Used to upgrade (rehash) the user's password automatically over time.
+   */
+  public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
+  {
+    if (!$user instanceof Vendor) {
+      throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', \get_class($user)));
     }
 
-    public function save(Vendor $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->persist($entity);
+    $user->setPassword($newHashedPassword);
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+    $this->save($user, true);
+  }
 
-    public function remove(Vendor $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->remove($entity);
+  public function findAllWithPagination($page, $limit)
+  {
+    $qb = $this->createQueryBuilder('b')
+      ->setFirstResult(($page - 1) * $limit)
+      ->setMaxResults($limit);
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+    return $qb->getQuery()->getResult();
+  }
 
-    /**
-     * Used to upgrade (rehash) the user's password automatically over time.
-     */
-    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
-    {
-        if (!$user instanceof Vendor) {
-            throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', \get_class($user)));
-        }
+  //    /**
+  //     * @return Vendor[] Returns an array of Vendor objects
+  //     */
+  //    public function findByExampleField($value): array
+  //    {
+  //        return $this->createQueryBuilder('v')
+  //            ->andWhere('v.exampleField = :val')
+  //            ->setParameter('val', $value)
+  //            ->orderBy('v.id', 'ASC')
+  //            ->setMaxResults(10)
+  //            ->getQuery()
+  //            ->getResult()
+  //        ;
+  //    }
 
-        $user->setPassword($newHashedPassword);
-
-        $this->save($user, true);
-    }
-
-//    /**
-//     * @return Vendor[] Returns an array of Vendor objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('v')
-//            ->andWhere('v.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('v.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Vendor
-//    {
-//        return $this->createQueryBuilder('v')
-//            ->andWhere('v.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+  //    public function findOneBySomeField($value): ?Vendor
+  //    {
+  //        return $this->createQueryBuilder('v')
+  //            ->andWhere('v.exampleField = :val')
+  //            ->setParameter('val', $value)
+  //            ->getQuery()
+  //            ->getOneOrNullResult()
+  //        ;
+  //    }
 }

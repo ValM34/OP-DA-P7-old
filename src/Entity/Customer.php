@@ -4,8 +4,29 @@ namespace App\Entity;
 
 use App\Repository\CustomerRepository;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
+use Hateoas\Configuration\Annotation as Hateoas;
+
+/**
+ * @Hateoas\Relation(
+ *      "customer",
+ *      href = @Hateoas\Route(
+ *          "customers_get_one",
+ *          parameters = { "id" = "expr(object.getId())" }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getUsersByVendor")
+ * ) 
+ * @Hateoas\Relation(
+ *      "vendor",
+ *      href = @Hateoas\Route(
+ *          "app_vendor",
+ *          parameters = { "id" = "expr(object.getVendor().getId())" }
+ *      ),
+ *      exclusion = @Hateoas\Exclusion(groups="getUser")
+ * )
+ */
 
 #[ORM\Entity(repositoryClass: CustomerRepository::class)]
 class Customer

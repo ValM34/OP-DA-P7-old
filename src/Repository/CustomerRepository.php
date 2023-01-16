@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Customer;
+use App\Entity\Vendor;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,51 +17,73 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class CustomerRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, Customer::class);
+  public function __construct(ManagerRegistry $registry)
+  {
+    parent::__construct($registry, Customer::class);
+  }
+
+  public function save(Customer $entity, bool $flush = false): void
+  {
+    $this->getEntityManager()->persist($entity);
+
+    if ($flush) {
+      $this->getEntityManager()->flush();
     }
+  }
 
-    public function save(Customer $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->persist($entity);
+  public function remove(Customer $entity, bool $flush = false): void
+  {
+    $this->getEntityManager()->remove($entity);
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
+    if ($flush) {
+      $this->getEntityManager()->flush();
     }
+  }
 
-    public function remove(Customer $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->remove($entity);
+  public function findByVendor(Vendor $vendor, $page, $limit)
+  {
+    return $this->createQueryBuilder('u')
+      ->andWhere('u.vendor = :val')
+      ->setParameter('val', $vendor)
+      ->orderBy('u.id', 'ASC')
+      ->setFirstResult(($page - 1) * $limit)
+      ->setMaxResults($limit)
+      ->getQuery()
+      ->getResult()
+    ;
+  }
 
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
+  public function findAllWithPagination($page, $limit)
+  {
+    $qb = $this->createQueryBuilder('b')
+      ->setFirstResult(($page - 1) * $limit)
+      ->setMaxResults($limit);
 
-//    /**
-//     * @return Customer[] Returns an array of Customer objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('u')
-//            ->andWhere('u.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('u.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    return $qb->getQuery()->getResult();
+  }
 
-//    public function findOneBySomeField($value): ?Customer
-//    {
-//        return $this->createQueryBuilder('u')
-//            ->andWhere('u.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+  //    /**
+  //     * @return Customer[] Returns an array of Customer objects
+  //     */
+  //    public function findByExampleField($value): array
+  //    {
+  //        return $this->createQueryBuilder('u')
+  //            ->andWhere('u.exampleField = :val')
+  //            ->setParameter('val', $value)
+  //            ->orderBy('u.id', 'ASC')
+  //            ->setMaxResults(10)
+  //            ->getQuery()
+  //            ->getResult()
+  //        ;
+  //    }
+
+  //    public function findOneBySomeField($value): ?Customer
+  //    {
+  //        return $this->createQueryBuilder('u')
+  //            ->andWhere('u.exampleField = :val')
+  //            ->setParameter('val', $value)
+  //            ->getQuery()
+  //            ->getOneOrNullResult()
+  //        ;
+  //    }
 }

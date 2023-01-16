@@ -8,6 +8,21 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use JMS\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
+use Hateoas\Configuration\Annotation as Hateoas;
+
+/**
+ * @Hateoas\Relation(
+ *      "self",
+ *      href = @Hateoas\Route(
+ *          "/api/vendor",
+ *          parameters = { "id" = "expr(object.getId())" }
+ *      )
+ * )
+ *
+ */
 
 #[ORM\Entity(repositoryClass: VendorRepository::class)]
 class Vendor implements UserInterface, PasswordAuthenticatedUserInterface
@@ -45,11 +60,11 @@ class Vendor implements UserInterface, PasswordAuthenticatedUserInterface
 
   #[ORM\OneToMany(mappedBy: 'vendor', targetEntity: Customer::class, orphanRemoval: true)]
   #[Groups(["getUsersByVendor"])]
-  private Collection $customer;
+  private Collection $customers;
 
   public function __construct()
   {
-    $this->customer = new ArrayCollection();
+    $this->customers = new ArrayCollection();
   }
 
   public function getId(): ?int
@@ -77,6 +92,16 @@ class Vendor implements UserInterface, PasswordAuthenticatedUserInterface
   public function getUserIdentifier(): string
   {
     return (string) $this->email;
+  }
+
+  /**
+   * Méthode getUsername qui permet de retourner le champ qui est utilisé pour l'authentification.
+   *
+   * @return string
+   */
+  public function getUsername(): string
+  {
+    return $this->getUserIdentifier();
   }
 
   /**
@@ -161,15 +186,15 @@ class Vendor implements UserInterface, PasswordAuthenticatedUserInterface
   /**
    * @return Collection<int, Customer>
    */
-  public function getCustomer(): Collection
+  public function getCustomers(): Collection
   {
-    return $this->customer;
+    return $this->customers;
   }
 
-  public function addCustomer(Customer $customer): self
+  public function addCustomers(Customer $customer): self
   {
-    if (!$this->customer->contains($customer)) {
-      $this->customer->add($customer);
+    if (!$this->customers->contains($customer)) {
+      $this->customers->add($customer);
       $customer->setVendor($this);
     }
 
@@ -178,7 +203,7 @@ class Vendor implements UserInterface, PasswordAuthenticatedUserInterface
 
   public function removeCustomer(Customer $customer): self
   {
-    if ($this->customer->removeElement($customer)) {
+    if ($this->customers->removeElement($customer)) {
       // set the owning side to null (unless already changed)
       if ($customer->getVendor() === $this) {
         $customer->setVendor(null);
